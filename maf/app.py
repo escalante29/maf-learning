@@ -27,6 +27,15 @@ from agent_framework import AgentResponse, Message, WorkflowRunState
 from agent_framework.orchestrations import HandoffAgentUserRequest
 
 from orchestration.handoff_workflow import build_pm_workflow
+from pydantic import BaseModel
+
+# In-memory store for local web chat sessions
+# Mapping conversation_id -> {"workflow": HandoffWorkflow, "pending_requests": list[HandoffAgentUserRequest]}
+session_store = {}
+
+class ChatRequest(BaseModel):
+    text: str
+    conversation_id: str = "local-dev-123"
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -178,22 +187,30 @@ async def run_console():
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def run_server():
-    """Start the FastAPI server for MS Teams Bot webhook."""
+    """Start the FastAPI server for MS Teams Bot webhook and Local Chat."""
     try:
         import uvicorn
-        from fastapi import FastAPI, Request
+        from fastapi import FastAPI, Request, Body
         from fastapi.responses import JSONResponse
+        from fastapi.staticfiles import StaticFiles
     except ImportError:
-        print("FastAPI/uvicorn not installed. Run: pip install fastapi uvicorn[standard]")
+        print("Required packages mostly from fastapi are not installed. Run: pip install -r requirements.txt")
         sys.exit(1)
 
     from config import settings
+    from bot.teams_bot import TeamsBot
+    from orchestration.handoff_workflow import build_pm_workflow
+    from agent_framework.orchestrations import HandoffAgentUserRequest
+    import os
 
     app = FastAPI(
         title="PM Copilot Bot",
-        description="AI Project Manager Assistant — MS Teams Bot Webhook",
+        description="AI Project Manager Assistant — MS Teams Bot Webhook & Local Chat",
         version="1.0.0",
     )
+
+    # Initialize Teams Bot Handler
+    bot_handler = TeamsBot()
 
     @app.get("/")
     async def root():
@@ -201,15 +218,93 @@ async def run_server():
 
     @app.post("/api/messages")
     async def messages(request: Request):
-        """Bot Framework webhook endpoint — receives activity from Teams."""
-        # TODO: Wire to BotFrameworkAdapter + TeamsBot activity handler
-        body = await request.json()
-        logger.info("Received activity: %s", body.get("type", "unknown"))
-        return JSONResponse(content={"status": "received"}, status_code=200)
+        """Bot Framework webhook endpoint — receives activity from Teams via microsoft-agents SDK."""
+        logger.info("Received activity on /api/messages")
+        
+        # start_agent_process creates an aiohttp handler internally.
+        # For a pure FastAPI implementation, we bridge the request to the handler logic.
+        # In a robust implementation, you might mount a sub-app or use the provided aiohttp utils directly.
+        
+        from microsoft_agents.hosting.core import TurnContext
+        from microsoft_agents.activity import Activity
+        
+        try:
+            body = await request.json()
+            activity = Activity().deserialize(body)
+            
+            # Note: A real implementation requires Adapter authentication logic
+            # For simplicity in this scaffold, we invoke the bot directly
+            
+            # turn_context = TurnContext(...)
+            # await bot_handler.on_turn(turn_context)
+            
+            return JSONResponse(content={"status": "not_fully_implemented_in_scaffold"}, status_code=501)
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    from agent_framework import AgentResponse
+    
+    @app.post("/api/local_chat")
+    async def local_chat(chat_request: ChatRequest):
+        """Endpoint for the local HTML/JS Web Chat UI to test the workflow directly."""
+        try:
+            conv_id = chat_request.conversation_id
+            
+            if conv_id not in session_store:
+                session_store[conv_id] = {
+                    "workflow": build_pm_workflow(),
+                    "pending": []
+                }
+            
+            session = session_store[conv_id]
+            workflow = session["workflow"]
+            pending = session["pending"]
+            
+            if not pending:
+                # First message or workflow is idle
+                events = await workflow.run(chat_request.text, stream=False)
+            else:
+                # Responding to a pending request (user input)
+                responsesPayload = {
+                    req.request_id: HandoffAgentUserRequest.create_response(chat_request.text)
+                    for req in pending
+                }
+                session["pending"] = [] # Clear pending since we are responding
+                events = await workflow.run(responses=responsesPayload, stream=False)
+            
+            responses = []
+            
+            for event in events:
+                if event.type == "output" and isinstance(event.data, AgentResponse):
+                    for msg in event.data.messages:
+                        if msg.text:
+                            responses.append({
+                                "text": msg.text,
+                                "from": {"name": msg.author_name or msg.role},
+                                "attachments": [] # Add Adaptive Cards here if present in output
+                            })
+                elif event.type == "request_info" and isinstance(event.data, HandoffAgentUserRequest):
+                    # Save the pending request event so the next user message is routed to it
+                    session["pending"].append(event)
+            
+            return JSONResponse(content={"responses": responses}, status_code=200)
+
+        except Exception as e:
+            logger.error(f"Error in local chat: {e}")
+            return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    # Mount the frontend directory at /chat
+    frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
+    if os.path.exists(frontend_dir):
+        app.mount("/chat", StaticFiles(directory=frontend_dir, html=True), name="chat")
+        print(f"\n{GREEN}{BOLD}  👉 Web Chat UI hosted at: http://localhost:{settings.port}/chat{RESET}")
+    else:
+        print(f"\n{YELLOW}  ⚠️ Frontend directory not found. Web Chat UI will not be available.{RESET}")
 
     port = settings.port
     print(f"\n{CYAN}{BOLD}  🚀 PM Copilot Bot server starting on port {port}...{RESET}")
-    print(f"  Webhook URL: http://localhost:{port}/api/messages\n")
+    print(f"  Teams Webhook: http://localhost:{port}/api/messages\n")
 
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
     server = uvicorn.Server(config)

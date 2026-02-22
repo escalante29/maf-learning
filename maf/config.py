@@ -1,6 +1,14 @@
 """Application configuration loaded from environment variables / .env file."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from dotenv import load_dotenv
+
+# Load .env into os.environ so agent-framework can read OPENAI_API_KEY
+load_dotenv()
+
+# Ensure MAF has the default model explicitly in os.environ
+os.environ.setdefault("OPENAI_CHAT_MODEL_ID", "gpt-4o-mini")
 
 
 class Settings(BaseSettings):
@@ -18,7 +26,7 @@ class Settings(BaseSettings):
 
     # ── OpenAI ───────────────────────────────────────────────────────────
     openai_api_key: str = ""
-    openai_chat_model_id: str = "gpt-4o"
+    openai_chat_model_id: str = "gpt-4o-mini"
 
     # ── Microsoft Graph ──────────────────────────────────────────────────
     azure_tenant_id: str = ""

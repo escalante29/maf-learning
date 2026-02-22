@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Copilot - Web Chat</title>
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- Adaptive Cards JS SDK -->
+    <script src="https://unpkg.com/adaptivecards@3.0.1/dist/adaptivecards.min.js"></script>
+
+    <!-- Markdown Parser (optional, but helpful if agents return Markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>PM Copilot</h2>
+            <p>Powered by MAF & MS 365 Agents SDK</p>
+        </div>
+
+        <div class="chat-history" id="chatHistory">
+            <div class="message system-message">
+                Welcome to PM Copilot! How can I help you today?
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <input type="text" id="messageInput" placeholder="Type your message here..." autocomplete="off">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script src="./chat.js"></script>
+</body>
+
+</html>
