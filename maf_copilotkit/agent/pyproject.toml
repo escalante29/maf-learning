@@ -1,0 +1,20 @@
+[project]
+name = "maf-copilotkit-agent"
+version = "0.1.0"
+description = "MAF + CopilotKit starter — backend agent service"
+requires-python = ">=3.11"
+dependencies = [
+    # Microsoft Agent Framework (preview)
+    "agent-framework==1.0.0rc4",
+    "agent-framework-ag-ui",
+    # Web server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    # Configuration
+    "pydantic-settings>=2.7.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

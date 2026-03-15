@@ -150,3 +150,18 @@ cython_debug/
 # OS Specific
 .DS_Store
 Thumbs.db
+
+# Node / JavaScript
+node_modules/
+.next/
+.turbo/
+.nx/cache
+.nx/workspace-data
+
+# IDE
+.vscode/
+
+# Visual Studio
+*.sln
+*.suo
+*.user

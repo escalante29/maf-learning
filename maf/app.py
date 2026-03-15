@@ -10,6 +10,9 @@ Usage:
     # MAF DevUI mode (visual debugging)
     python app.py --devui
 
+    # CopilotKit mode (AG-UI server for CopilotKit frontend)
+    python app.py --copilotkit
+
 Environment:
     Copy .env.example to .env and fill in your OpenAI API key.
     Set GRAPH_MODE=mock for demo mode (no Azure credentials needed).
@@ -27,6 +30,7 @@ from agent_framework import AgentResponse, Message, WorkflowRunState
 from agent_framework.orchestrations import HandoffAgentUserRequest
 
 from orchestration.handoff_workflow import build_pm_workflow
+from agui_endpoint import mount_agui_endpoint
 from pydantic import BaseModel
 
 # In-memory store for local web chat sessions
@@ -193,6 +197,7 @@ async def run_server():
         from fastapi import FastAPI, Request, Body
         from fastapi.responses import JSONResponse
         from fastapi.staticfiles import StaticFiles
+        from fastapi.middleware.cors import CORSMiddleware
     except ImportError:
         print("Required packages mostly from fastapi are not installed. Run: pip install -r requirements.txt")
         sys.exit(1)
@@ -208,6 +213,18 @@ async def run_server():
         description="AI Project Manager Assistant — MS Teams Bot Webhook & Local Chat",
         version="1.0.0",
     )
+
+    # CORS — allow the CopilotKit Next.js frontend to connect
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Mount AG-UI endpoint for CopilotKit
+    mount_agui_endpoint(app, path="/copilotkit")
 
     # Initialize Teams Bot Handler
     bot_handler = TeamsBot()
@@ -304,7 +321,8 @@ async def run_server():
 
     port = settings.port
     print(f"\n{CYAN}{BOLD}  🚀 PM Copilot Bot server starting on port {port}...{RESET}")
-    print(f"  Teams Webhook: http://localhost:{port}/api/messages\n")
+    print(f"  Teams Webhook: http://localhost:{port}/api/messages")
+    print(f"  AG-UI (CopilotKit): http://localhost:{port}/copilotkit\n")
 
     config = uvicorn.Config(app, host="0.0.0.0", port=port, log_level="info")
     server = uvicorn.Server(config)
@@ -359,8 +377,9 @@ def main():
         epilog="""
 Examples:
   python app.py --console     Interactive terminal mode
-  python app.py --server      Start Bot Framework webhook server
+  python app.py --server      Start Bot Framework webhook server + AG-UI
   python app.py --devui       Launch MAF Developer UI
+  python app.py --copilotkit  Start AG-UI server for CopilotKit frontend
         """,
     )
 
@@ -371,11 +390,15 @@ Examples:
     )
     group.add_argument(
         "--server", action="store_true",
-        help="Start the MS Teams Bot webhook server",
+        help="Start the MS Teams Bot webhook server (includes AG-UI endpoint)",
     )
     group.add_argument(
         "--devui", action="store_true",
         help="Launch MAF Developer UI for visual debugging",
+    )
+    group.add_argument(
+        "--copilotkit", action="store_true",
+        help="Start the AG-UI server for CopilotKit frontend",
     )
 
     args = parser.parse_args()
@@ -386,6 +409,10 @@ Examples:
         asyncio.run(run_server())
     elif args.devui:
         asyncio.run(run_devui())
+    elif args.copilotkit:
+        # --copilotkit is the same as --server; the AG-UI endpoint
+        # is always mounted. This alias makes intent clearer.
+        asyncio.run(run_server())
 
 
 if __name__ == "__main__":

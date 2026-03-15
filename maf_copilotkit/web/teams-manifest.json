@@ -1,0 +1,37 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.19",
+    "version": "0.1.0",
+    "id": "{{YOUR-APP-ID}}",
+    "developer": {
+        "name": "Your Company",
+        "websiteUrl": "https://example.com",
+        "privacyUrl": "https://example.com/privacy",
+        "termsOfUseUrl": "https://example.com/terms"
+    },
+    "name": {
+        "short": "PM Copilot",
+        "full": "PM Copilot — AI Project Manager Assistant"
+    },
+    "description": {
+        "short": "AI-powered project management assistant",
+        "full": "An enterprise AI assistant powered by Microsoft Agent Framework and CopilotKit. Manage tasks, calendar events, and project documents from within Microsoft Teams."
+    },
+    "icons": {
+        "outline": "outline-32x32.png",
+        "color": "color-192x192.png"
+    },
+    "accentColor": "#6366f1",
+    "staticTabs": [
+        {
+            "entityId": "pm-copilot",
+            "name": "PM Copilot",
+            "contentUrl": "https://{{YOUR-TUNNEL-URL}}/",
+            "scopes": ["personal"]
+        }
+    ],
+    "permissions": ["identity", "messageTeamMembers"],
+    "validDomains": [
+        "{{YOUR-TUNNEL-URL}}"
+    ]
+}

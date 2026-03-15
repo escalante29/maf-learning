@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* ── CopilotKit theme overrides ──────────────────────────────────────── */
+:root {
+  --copilotkit-primary: #6366f1;
+  --copilotkit-background: #fafafa;
+  --copilotkit-foreground: #0a0a0a;
+  --copilotkit-muted: #f4f4f5;
+  --copilotkit-muted-foreground: #71717a;
+  --copilotkit-border: #e4e4e7;
+  --copilotkit-radius: 0.75rem;
+}
+
+.dark,
+[data-theme="dark"] {
+  --copilotkit-primary: #818cf8;
+  --copilotkit-background: #09090b;
+  --copilotkit-foreground: #fafafa;
+  --copilotkit-muted: #27272a;
+  --copilotkit-muted-foreground: #a1a1aa;
+  --copilotkit-border: #3f3f46;
+}
+
+/* ── Global defaults ─────────────────────────────────────────────────── */
+html {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--copilotkit-background);
+  color: var(--copilotkit-foreground);
+}
+
+/* ── CopilotKit sidebar customization ────────────────────────────────── */
+.copilotKitSidebar {
+  --copilotkit-sidebar-width: 420px;
+}
+
+/* Smooth scrollbar for chat */
+.copilotKitMessages::-webkit-scrollbar {
+  width: 6px;
+}
+.copilotKitMessages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.copilotKitMessages::-webkit-scrollbar-thumb {
+  background: var(--copilotkit-muted-foreground);
+  border-radius: 3px;
+}

@@ -35,7 +35,7 @@ Inside the `maf/agents/` directory, you will find several subdirectories demonst
 
 ## 4. Important Technical Details
 
-*   **Python Environment**: The project requires Python 3.10+. Dependencies should be installed in the virtual environment located at `maf/.venv`. The current `agent-framework` version is `1.0.0rc1`. Note that 1.0.0rc1 removes compatibility shims for `FunctionTool[Any]`, enforces explicit imports over wildcard imports, and standardizes `source_id` for state providers.
+*   **Python Environment**: The project requires Python 3.10+. Dependencies should be installed in the virtual environment located at `maf/.venv`. The current `agent-framework` version is `1.0.0rc4`. Note that 1.0.0rc1 removed compatibility shims for `FunctionTool[Any]`, enforced explicit imports over wildcard imports, and standardized `source_id` for state providers. 1.0.0rc4 includes stability improvements and better AG-UI integration.
 *   **Configuration**: Settings are loaded from `maf/.env` (use `maf/.env.example` as a template) and managed via `maf/config.py`.
     *   Pay special attention to the `GRAPH_MODE` environment variable (`mock` or `live`). This controls whether the tools interact with real Microsoft Graph APIs or use mocked data.
 *   **Run Modes**: The application (`maf/app.py`) supports three execution modes:

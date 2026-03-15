@@ -1,5 +1,6 @@
 # Microsoft Agent Framework (preview)
-agent-framework --pre
+agent-framework==1.0.0rc4
+agent-framework-ag-ui
 
 # Web server
 fastapi>=0.115.0
